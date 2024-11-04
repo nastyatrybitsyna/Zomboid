@@ -65,21 +65,28 @@ Support for JSON will be added to allow more flexible data structures, easier in
 
 ```mermaid
 classDiagram
-    %% InventoryManager is the main class responsible for managing inventory items
-
     class InventoryManager {
-        +items: list
-        +read_csv(file_path: str)
-        +display_items(page_size: int)
-        +get_item_by_id(item_id: str)
-        +search_item_by_name(name: str)
+        +__init__()
+        +read_csv(file_path)
+        +display_items(page_size)
+        +get_item_by_id(item_id)
+        +search_item_by_name(name)
+        -items : list
     }
 
-    %% InventoryManager does not contain any other classes but is self-sufficient
-    %% However, we can denote that it uses the built-in csv module
-    class CSVReader {
-        +load(file_path: str)
+    InventoryManager : +items
+
+    class CSV {
+        <<interface>>
+        +DictReader()
     }
 
-    %% CSVReader handles reading CSV data independently
-    InventoryManager ..> CSVReader : "uses"
+    class Item {
+        <<entity>>
+        +ID
+        +Name
+        +Other attributes
+    }
+
+    InventoryManager --> CSV : reads
+    InventoryManager --> Item : manages
