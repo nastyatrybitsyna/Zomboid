@@ -67,28 +67,20 @@ Support for JSON will be added to allow more flexible data structures, easier in
 classDiagram
     class InventoryManager {
         +__init__()
-        +read_csv(file_path)
-        +display_items(page_size)
-        +get_item_by_id(item_id)
-        +search_item_by_name(name)
-        -items : list
-    }
-
-    InventoryManager : +items
-
-    class CSV {
-        <<interface>>
-        +DictReader()
+        +read_csv(file_path: str)
+        +display_items(page_size: int)
+        +get_item_by_id(item_id: Union[int, str])
+        +search_item_by_name(name: str)
+        -items: List[Item]
     }
 
     class Item {
-        <<entity>>
-        +ID
-        +Name
-        +Other attributes
+        +id: int
+        +name: str
+        +description: str
+        +quantity: int
     }
 
-    InventoryManager --> CSV : reads
-    InventoryManager --> Item : manages
+    InventoryManager "1" *-- "*" Item : contains
 
 
