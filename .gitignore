@@ -1,0 +1,46 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Temporary files
+*.tmp
+*.temp
+
+# CSV files (if you do not want to track them)
+*.csv
+
+# Environment variables file
+.env
+
+# IDE or editor specific files
+.vscode/
+.idea/
+*.swp
+*.sublime-workspace
+
+# Logs
+*.log
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+MANIFEST
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Other potentially sensitive or temporary files
+*.DS_Store
