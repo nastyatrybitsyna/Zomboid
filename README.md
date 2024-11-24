@@ -59,9 +59,9 @@ results = manager.search_item_by_name("Chicken")
 if results:
     print("Search results:", results)
 ```
-NEW:
+# NEW:
 
-# Display Condition Percentages. 
+Display Condition Percentages. 
 In the updated version of the program, the InventoryManager now provides functionality to display the condition distribution for items, and percentage breakdowns of conditions:
 - Option 4 displays the overall condition percentage distribution for all items.
 - Option 5 shows the condition distribution of items filtered by name (without recalculating percentages, simply displaying the data for those items).
