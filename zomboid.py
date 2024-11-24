@@ -1,9 +1,10 @@
 import csv
+from collections import Counter
 
 class InventoryManager:
     """
     A class to manage inventory items by reading from a CSV file, displaying items, 
-    fetching items by ID, and searching items by name.
+    fetching items by ID, searching items by name, and calculating condition statistics.
     """
     
     def __init__(self):
@@ -19,12 +20,6 @@ class InventoryManager:
         
         Parameters:
         - file_path (str): The path to the CSV file containing the inventory data.
-        
-        CSV file format:
-        - Each row should contain item information with column headers matching field names.
-        
-        Exceptions:
-        - Prints an error message if the file is not found or cannot be read.
         """
         try:
             with open(file_path, mode='r', newline='', encoding='utf-8') as csvfile:
@@ -40,15 +35,6 @@ class InventoryManager:
     def display_items(self, page_size=10):
         """
         Displays items in a paginated format, showing a specified number of items per page.
-        
-        Parameters:
-        - page_size (int): The number of items to display per page (default is 10).
-        
-        User Interaction:
-        - Displays items in pages. Users can view the next page by pressing Enter 
-          or type 'exit' to quit viewing.
-          
-        Prints a message if there are no items to display.
         """
         if not self.items:
             print("No items available to display.")
@@ -79,14 +65,6 @@ class InventoryManager:
     def get_item_by_id(self, item_id):
         """
         Fetches an item by its ID.
-        
-        Parameters:
-        - item_id (int or str): The ID of the item to retrieve.
-        
-        Returns:
-        - dict: The item data if found, or None if the item is not found.
-        
-        Prints a message if no item with the specified ID is found.
         """
         for item in self.items:
             if item.get('ID') == str(item_id):
@@ -97,35 +75,107 @@ class InventoryManager:
     def search_item_by_name(self, name):
         """
         Searches for items by name and returns all items containing the specified name.
-        
-        Parameters:
-        - name (str): The name or part of the name to search for in the inventory.
-        
-        Returns:
-        - list of dict: A list of items matching the search criteria.
-        
-        Prints a message if no items match the search criteria.
         """
         results = [item for item in self.items if name.lower() in item.get('Name', '').lower()]
         if not results:
             print(f"No items found with name containing '{name}'.")
         return results
 
-# Example usage
-if __name__ == "__main__":
+    def get_condition_percentage(self):
+        """
+        Calculates the percentage distribution of items by condition.
+        """
+        if not self.items:
+            print("No items available to analyze.")
+            return {}
+
+        condition_counts = Counter(item.get('Condition', 'Unknown') for item in self.items)
+        total_items = len(self.items)
+        percentages = {condition: (count / total_items) * 100 for condition, count in condition_counts.items()}
+        return percentages
+
+    def get_condition_percentage_by_name(self, name):
+        """
+        Retrieves the condition of items with a specific name and calculates percentage distribution for them.
+        """
+        filtered_items = [item for item in self.items if name.lower() in item.get('Name', '').lower()]
+        if not filtered_items:
+            print(f"No items found with name containing '{name}'.")
+            return {}
+
+        condition_counts = Counter(item.get('Condition', 'Unknown') for item in filtered_items)
+        total_filtered_items = len(filtered_items)
+        percentages = {condition: (count / total_filtered_items) * 100 for condition, count in condition_counts.items()}
+        return percentages
+
+
+def main():
+    """
+    CLI for the InventoryManager class.
+    """
     manager = InventoryManager()
-    # Specify the correct path to your CSV file
     manager.read_csv("inventory.csv")
 
-    # Display items with pagination
-    manager.display_items(page_size=5)
+    while True:
+        print("\nOptions:")
+        print("1. Display items")
+        print("2. Get item by ID")
+        print("3. Search item by name")
+        print("4. Get condition percentage")
+        print("5. Get condition percentages for items with a specific name")
+        print("6. Exit")
+        
+        choice = input("Choose an option: ")
 
-    # Retrieve item by ID
-    item = manager.get_item_by_id(2)
-    if item:
-        print("Item by ID:", item)
+        if choice == '1':
+            page_size = int(input("Enter page size (default 10): ") or 10)
+            manager.display_items(page_size=page_size)
+        elif choice == '2':
+            item_id = input("Enter item ID: ")
+            item = manager.get_item_by_id(item_id)
+            if item:
+                print("Item:", item)
+        elif choice == '3':
+            name = input("Enter item name to search: ")
+            results = manager.search_item_by_name(name)
+            if results:
+                print("Search results:")
+                for result in results:
+                    print(result)
+        elif choice == '4':
+            percentages = manager.get_condition_percentage()
+            if not percentages:
+                print("No data available to calculate condition percentages.")
+            else:
+                print("\nCondition percentages:")
+                for condition, percentage in percentages.items():
+                    print(f"{condition} — {percentage:.2f}%")
+                print("\nItems with their conditions:")
+                for item in manager.items:
+                    item_name = item.get('Name', 'Unknown')
+                    item_condition = item.get('Condition', 'Unknown')
+                    print(f"{item_name} ({item_condition})")
+        elif choice == '5':
+            name = input("Enter item name to search for condition percentages: ")
+            filtered_items = [item for item in manager.items if name.lower() in item.get('Name', '').lower()]
+            if not filtered_items:
+                print(f"No items found with name containing '{name}'.")
+            else:
+                print(f"\nItems with their conditions for name containing '{name}':")
+                condition_counts = Counter(item.get('Condition', 'Unknown') for item in filtered_items)
+                total_items = len(filtered_items)
+                for condition, count in condition_counts.items():
+                    percentage = (count / total_items) * 100
+                    print(f"{condition} — {percentage:.2f}%")
+                for item in filtered_items:
+                    item_name = item.get('Name', 'Unknown')
+                    item_condition = item.get('Condition', 'Unknown')
+                    print(f"{item_name} ({item_condition})")
+        elif choice == '6':
+            print("Exiting...")
+            break
+        else:
+            print("Invalid option. Please try again.")
 
-    # Search for an item by name
-    search_results = manager.search_item_by_name("Chicken")
-    if search_results:
-        print("Search results:", search_results)
+if __name__ == "__main__":
+    main()
