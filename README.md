@@ -7,7 +7,7 @@ This library is designed for working with inventory lists in CSV format, specifi
 - Quickly locating needed items: You can retrieve items by their unique identifier (ID) or by their name.
 - Paginated data display: Allows easy viewing of large lists of items, with configurable items per page.
 - Filter support: Enables convenient display of items based on name or condition criteria.
-- Condition percentage display: Shows a distribution of item conditions and their respective percentages in the inventory.
+- Condition percentages: View condition distribution percentages for the entire inventory or filtered items.
 - Search by item name: Allows filtering the inventory by item name to view condition distributions.
 
 # Requirements:
@@ -52,48 +52,35 @@ item = manager.get_item_by_id(2)
 if item:
     print("Item by ID:", item)
 ```
-- Search for Item by Name:
-- Call search_item_by_name(name) to search for items containing a specific keyword in their name.
-```python
-results = manager.search_item_by_name("Chicken")
-if results:
-    print("Search results:", results)
-```
-# NEW:
+NEW:
 
-Display Condition Percentages. 
+# Display Condition Percentages. 
 In the updated version of the program, the InventoryManager now provides functionality to display the condition distribution for items, and percentage breakdowns of conditions:
-- Option 4 displays the overall condition percentage distribution for all items.
-- Option 5 shows the condition distribution of items filtered by name (without recalculating percentages, simply displaying the data for those items).
+- All Items:
 ```python
-elif choice == '4':
-            percentages = manager.get_condition_percentage()
-            if not percentages:
-                print("No data available to calculate condition percentages.")
-            else:
-                print("\nCondition percentages:")
-                for condition, percentage in percentages.items():
-                    print(f"{condition} — {percentage:.2f}%")
-                print("\nItems with their conditions:")
-                for item in manager.items:
-                    item_name = item.get('Name', 'Unknown')
-                    item_condition = item.get('Condition', 'Unknown')
-                    print(f"{item_name} ({item_condition})")
+percentages = manager.get_condition_percentage()  
+if percentages:  
+    print("Condition percentages:")  
+    for condition, percentage in percentages.items():  
+        print(f"{condition}: {percentage:.2f}%")  
 ```
+- Filtered by Name:
 ```python
-elif choice == '5':
-    name = input("Enter item name to search for condition percentages: ")
-    filtered_items = [item for item in manager.items if name.lower() in item.get('Name', '').lower()]
-    if not filtered_items:
-        print(f"No items found with name containing '{name}'.")
-    else:
-        print(f"\nItems with their conditions for name containing '{name}':")
-        for item in filtered_items:
-            item_name = item.get('Name', 'Unknown')
-            item_condition = item.get('Condition', 'Unknown')
-            print(f"{item_name} ({item_condition})")
+filtered_percentages = manager.get_condition_percentage_by_name("Chicken")  
+if filtered_percentages:  
+    print("Filtered condition percentages:")  
+    for condition, percentage in filtered_percentages.items():  
+        print(f"{condition}: {percentage:.2f}%")  
 ```
-
+# How to use:
+- All Items:
+```python
+python zomboid.py inventory.csv display_all
+```
+- Filtered by Name:
+```python
+python zomboid.py inventory.csv state_percentage "Chicken"
+```
 # Future Support for JSON
 Support for JSON will be added to allow more flexible data structures, easier integration with APIs, and improved readability. Methods to read from JSON files will be introduced.
 
@@ -101,27 +88,23 @@ Support for JSON will be added to allow more flexible data structures, easier in
 [Trubitsyna Anastasia Ruslanivna]
 
 ```mermaid
-classDiagram
-    class InventoryManager {
-        +__init__()
-        +read_csv(file_path: str)
-        +display_items(page_size: int)
-        +get_item_by_id(item_id: Union[int, str])
-        +search_item_by_name(name: str)
-        +get_condition_percentage()
-        +get_condition_percentage_by_name(name: str)
-        -items: List[Item]
-    }
+classDiagram  
+    class CSVReader {  
+        +read_csv(file_path: str) static  
+    }  
 
-    class Item {
-        +id: int
-        +name: str
-        +type: str
-        +condition: str
-        +amount: int
-    }
+    class SurvivalInventory {  
+        +__init__(file_path: str)  
+        +get_item_by_id(item_id: str) : List[Dict[str, str]]  
+        +search_items_by_name(search_term: str) : List[Dict[str, str]]  
+        +display_all_items_with_condition_percentage() : void  
+        +get_condition_percentage_by_name(name: str) : void  
+        -file_path: str  
+        -inventory: List[Dict[str, str]]  
+    }  
 
-    InventoryManager "1" *-- "*" Item : contains
+    CSVReader <|-- SurvivalInventory  
+
 
 
 
