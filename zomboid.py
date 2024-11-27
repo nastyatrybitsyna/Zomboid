@@ -1,91 +1,129 @@
 import csv
 import argparse
 
-class CSVReader:
-    """Class for reading CSV files and returning data as a list of dictionaries."""
+class InventoryManager:
+    """
+    A class to manage inventory items by reading from a CSV file, displaying items, 
+    fetching items by ID, and searching items by name.
+    """
     
-    @staticmethod
-    def read_csv(file_path):
-        """Reads data from a CSV file and returns it as a list of dictionaries."""
-        with open(file_path, mode='r') as file:
-            csv_reader = csv.DictReader(file)
-            return list(csv_reader)
+    def __init__(self):
+        self.items = []
 
+    def read_csv(self, file_path):
+        try:
+            with open(file_path, mode='r', newline='', encoding='utf-8') as csvfile:
+                reader = csv.DictReader(csvfile)
+                self.items = [row for row in reader if row]
+        except FileNotFoundError:
+            print("File not found. Please check the file path and try again.")
+        except csv.Error as e:
+            print(f"Error reading CSV file: {e}")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
 
-class SurvivalInventory:
-    """Class to manage items from a CSV file, allowing loading, searching, and viewing data."""
-    
-    def __init__(self, file_path):
-        self.file_path = file_path
-        self.inventory = CSVReader.read_csv(file_path)
-
-    def get_item_by_id(self, item_id):
-        """Finds an item by ID."""
-        return [item for item in self.inventory if item.get('ID') == str(item_id)]
-
-    def search_items_by_name(self, search_term):
-        """Finds items by a partial name match."""
-        return [item for item in self.inventory if search_term.lower() in item.get('Name', '').lower()]
-
-    def display_all_items_with_condition_percentage(self):
-        """Displays all items with their condition and percentage of the total inventory."""
-        total_items = len(self.inventory)
-        condition_counts = {}
-
-        """Count items by condition"""
-        for item in self.inventory:
-            condition = item['Condition']
-            condition_counts[condition] = condition_counts.get(condition, 0) + 1
-
-        print(f"{'Name':<20}{'Condition':<15}{'Percentage':<10}")
-        print('-' * 45)
-
-        for item in self.inventory:
-            condition = item['Condition']
-            percentage = (condition_counts[condition] / total_items) * 100
-            print(f"{item['Name']:<20}{condition:<15}{percentage:<10.2f}")
-
-    def get_condition_percentage_by_name(self, name):
-        """Calculates the percentage of items matching a condition filtered by name."""
-        filtered_items = [item for item in self.inventory if name.lower() in item['Name'].lower()]
-        total_filtered = len(filtered_items)
-
-        if total_filtered == 0:
-            print(f"No items found with the name containing '{name}'.")
+    def display_items(self, page_size=10):
+        if not self.items:
+            print("No items available to display.")
             return
 
+        total_items = len(self.items)
+        current_page = 0
+
+        while True:
+            start_index = current_page * page_size
+            end_index = min(start_index + page_size, total_items)
+            page_items = self.items[start_index:end_index]
+
+            print(f"\nPage {current_page + 1}")
+            for item in page_items:
+                print(item)
+
+            if end_index >= total_items:
+                print("No more items to display.")
+                break
+
+            user_input = input("Press Enter to view the next page, or type 'exit' to quit: ")
+            if user_input.lower() == 'exit':
+                break
+
+            current_page += 1
+
+    def get_item_by_id(self, item_id):
+        for item in self.items:
+            if item.get('ID') == str(item_id):
+                return item
+        print(f"Item with ID {item_id} not found.")
+        return None
+
+    def search_item_by_name(self, name):
+        results = [item for item in self.items if name.lower() in item.get('Name', '').lower()]
+        if not results:
+            print(f"No items found with name containing '{name}'.")
+        return results
+
+    def get_condition_percentage(self, name_filter=None):
+        if not self.items:
+            print("Inventory is empty.")
+            return
+
+        filtered_items = self.items
+        if name_filter:
+            filtered_items = [item for item in self.items if name_filter.lower() in item.get('Name', '').lower()]
+
+        if not filtered_items:
+            print(f"No items found for the filter '{name_filter}'.")
+            return
+
+        """Count the occurrences of each condition"""
         condition_counts = {}
         for item in filtered_items:
-            condition = item['Condition']
+            condition = item.get('Condition', 'Unknown')
             condition_counts[condition] = condition_counts.get(condition, 0) + 1
 
-        print(f"Condition percentages for items with name '{name}':")
-        for condition, count in condition_counts.items():
-            percentage = (count / total_filtered) * 100
-            print(f"  {condition}: {percentage:.2f}%")
+        """Calculate the total and percentages"""
+        total_filtered = len(filtered_items)
+        condition_percentages = {k: (v / total_filtered) * 100 for k, v in condition_counts.items()}
 
-
-def main():
-    parser = argparse.ArgumentParser(description="Manage and analyze survival inventory from a CSV file.")
-    parser.add_argument('file', help="Path to the inventory CSV file.")
-    subparsers = parser.add_subparsers(dest='command', required=True)
-
-    """Subparser for displaying all items"""
-    parser_display_all = subparsers.add_parser('display_all', help="Display all items with condition and percentages.")
-
-    """Subparser for getting condition percentage by name"""
-    parser_condition_percentage = subparsers.add_parser('state_percentage', help="Get condition percentage by item name.")
-    parser_condition_percentage.add_argument('name', help="Name of the item to filter by.")
-
-    args = parser.parse_args()
-
-    manager = SurvivalInventory(args.file)
-
-    if args.command == 'display_all':
-        manager.display_all_items_with_condition_percentage()
-    elif args.command == 'state_percentage':
-        manager.get_condition_percentage_by_name(args.name)
-
+        """Display all items with their condition and percentage"""
+        print("\nItems with their condition percentages:")
+        for item in filtered_items:
+            condition = item.get('Condition', 'Unknown')
+            percentage = condition_percentages.get(condition, 0)
+            print(f"ID: {item.get('ID', 'N/A')}, Name: {item.get('Name', 'N/A')}, "
+                  f"Condition: {condition}, Percentage: {percentage:.2f}%")
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Manage inventory items.")
+    parser.add_argument("file", help="Path to the CSV file containing inventory data.")
+    parser.add_argument("--display", action="store_true", help="Display items in the inventory.")
+    parser.add_argument("--id", type=str, help="Get item by ID.")
+    parser.add_argument("--search", type=str, help="Search items by name.")
+    parser.add_argument("--percentage", action="store_true", help="Get percentage by condition for all items.")
+    parser.add_argument("--percentage-filter", type=str, help="Get percentage by condition for items matching a name.")
+
+    args = parser.parse_args()
+    manager = InventoryManager()
+
+    """Read the CSV file"""
+    manager.read_csv(args.file)
+
+    """Execute CLI commands"""
+    if args.display:
+        manager.display_items()
+
+    if args.id:
+        item = manager.get_item_by_id(args.id)
+        if item:
+            print("Item by ID:", item)
+
+    if args.search:
+        results = manager.search_item_by_name(args.search)
+        if results:
+            print("Search results:", results)
+
+    if args.percentage:
+        manager.get_condition_percentage()
+
+    if args.percentage_filter:
+        manager.get_condition_percentage(name_filter=args.percentage_filter)

@@ -56,31 +56,29 @@ NEW:
 
 # Display Condition Percentages. 
 In the updated version of the program, the InventoryManager now provides functionality to display the condition distribution for items, and percentage breakdowns of conditions:
-- All Items:
-```python
-percentages = manager.get_condition_percentage()  
-if percentages:  
-    print("Condition percentages:")  
-    for condition, percentage in percentages.items():  
-        print(f"{condition}: {percentage:.2f}%")  
-```
-- Filtered by Name:
-```python
-filtered_percentages = manager.get_condition_percentage_by_name("Chicken")  
-if filtered_percentages:  
-    print("Filtered condition percentages:")  
-    for condition, percentage in filtered_percentages.items():  
-        print(f"{condition}: {percentage:.2f}%")  
-```
+
 # How to use:
 - All Items:
 ```python
-python zomboid.py inventory.csv display_all
+python zomboid.py inventory.csv --display
 ```
-- Filtered by Name:
+- Retrieve Item by ID:
 ```python
-python zomboid.py inventory.csv state_percentage "Chicken"
+python zomboid.py inventory.csv --id 2
 ```
+- Search by name:
+```python
+python zomboid.py inventory.csv --search Chicken
+```
+- Percentage by condition for all items:
+```python
+python zomboid.py inventory.csv --percentage
+```
+- Percentage by condition for items with a specific name:
+```python
+python zomboid.py inventory.csv --percentage-filter Chicken
+```
+
 # Future Support for JSON
 Support for JSON will be added to allow more flexible data structures, easier integration with APIs, and improved readability. Methods to read from JSON files will be introduced.
 
@@ -88,22 +86,26 @@ Support for JSON will be added to allow more flexible data structures, easier in
 [Trubitsyna Anastasia Ruslanivna]
 
 ```mermaid
-classDiagram  
-    class CSVReader {  
-        +read_csv(file_path: str) static  
-    }  
+classDiagram
+    class InventoryManager {
+        +__init__()
+        +read_csv(file_path: str)
+        +display_items(page_size: int)
+        +get_item_by_id(item_id: str) : Dict[str, str] 
+        +search_item_by_name(name: str) : List[Dict[str, str]]
+        +get_condition_percentage(name_filter: str) : Dict[str, float]
+    }
 
-    class SurvivalInventory {  
-        +__init__(file_path: str)  
-        +get_item_by_id(item_id: str) : List[Dict[str, str]]  
-        +search_items_by_name(search_term: str) : List[Dict[str, str]]  
-        +display_all_items_with_condition_percentage() : void  
-        +get_condition_percentage_by_name(name: str) : void  
-        -file_path: str  
-        -inventory: List[Dict[str, str]]  
-    }  
+    class Item {
+        +ID: str
+        +Name: str
+        +Type: str
+        +Condition: str
+        +Amount: int
+    }
 
-    CSVReader <|-- SurvivalInventory  
+    InventoryManager "1" *-- "*" Item : manages >
+
 
 
 
